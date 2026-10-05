@@ -87,7 +87,7 @@ different machine: SKU is `C233` here against `C170` on the probed M1040.
 | | |
 |---|---|
 | Camera | `3277:00a8`, the detachable magnetic FHD Camera on USB port `3-4` |
-| Backlight | `intel_backlight`, `max_brightness` **704**; floor not yet measured |
+| Backlight | `intel_backlight`, `max_brightness` **704**; floor walked 18→88 (vbt 7→32) with `measure-floor.sh` — **no tint, mura or blotches at any step, including the lowest**, so `oled-backlight` has nothing to fix on this unit |
 | Fingerprint | `10a5:a900` — FPC, not Goodix. Working via the community driver [cityji/honor-magickbookpro-fingerprint-driver](https://github.com/cityji/honor-magickbookpro-fingerprint-driver) (libfprint 1.94.6 + MR396 + its patch set, FW `22.26.2.43`), not via this repository's Goodix patch and not in upstream libfprint |
 | Hotkeys | the [`patch/hotkeys/`](../../patch/hotkeys/) keymap additions built as a standalone `huawei-wmi.ko` overlay and verified live: the keyboard backlight key fires (codes `0x2b1`–`0x2b4` were logged unmapped before, the keyboard lights after), plus `0x2e0`/`0x2e1` observed in dmesg. `fixes=hotkeys` in the profile reflects this run |
 
