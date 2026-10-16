@@ -11,9 +11,15 @@ A different line from the MagicBook Pro, and it is here for one reason: **it
 carries the same FocalTech touchscreen as the reference machine**, so
 [`patch/micmute/`](../../patch/micmute/) applies unchanged.
 
-Nobody has run a single fix on one. Everything below is read off probes.
-
-Other models: [index](README.md).
+Nobody has run a single fix on one. Everything below is read off probes —
+except the **M1010** section, which is measured on the machine, and the two
+companion pages: [power](mra-xxx-power.md) (what Windows PC Manager does,
+what Linux measures, the reachable-but-unused EC/WMI surface) and
+[touchpad](mra-xxx-touchpad.md) (the firmware "Gesture To Go" layer, the
+vendor hidraw protocol, and the pressure digitizer). Both are read-only
+investigations on a BIOS 3.05 machine.
+ 
+ Other models: [index](README.md).
 
 ## Hardware
 
@@ -137,17 +143,27 @@ with `drm.debug` yet; until somebody does, `edp-dsc` should be treated as
 **xe-only** and the tier-A description ("runtime decides, nothing can break")
 needs a driver-generation condition.
 
-### Battery: the ZQC-P EC map does not transfer
+### Battery: the ZQC-P EC map does not transfer — RESOLVED
 
 Writing `70 90` to `charge_control_thresholds` lands `146 / 0 / 0x1d` at the
-ZQC-P offsets `0x80` / `0x81` / `0x85`, not `70 / 90 / 2`. The EC on this board
-maps its charge state elsewhere; the offsets need to be re-found before
-`patch/battery/` could be prepared. The threshold is still stored and read
-back through sysfs, so the desktop believes a limit that the EC has not armed.
+ZQC-P offsets `0x80` / `0x81` / `0x85`, not `70 / 90 / 2` — because on this
+board those bytes are **battery telemetry**, not charge state. Live EC reads
+(2026-10-08) put the armed pair at **`0xE4` / `0xE5` = `0x46` / `0x5A` = 70/90
+with `0xE6=02`**, i.e. mode 2 = PC Manager's "Office 70–90 %" preset, written
+through mailbox `ECCC(0x82, start, stop)`. `\GBCM` derives the mode from the
+start byte alone (40→1, 70→2, 95→3, else 0 = unarmed), so **only the three
+preset pairs can arm**; an invalid pair (the desktop applet's 75/80) is echoed
+back through sysfs but silently ignored by the EC. `patch/battery/` can be
+prepared from this. Details, sources, and the full power picture:
+`mra-xxx-power.md`.
 
 ### Not established, on this board too
 
-The backlight floor (`param_backlight_min`), the fan tachometer offsets, the
-headset microphone (the M1020 fixup configures pin 0x19 for it, but no headset
-was plugged in while testing), and the `micmute` symptom (not observed here
-either, but absence of observation is not a report).
+The backlight floor (`param_backlight_min`), the headset microphone (the
+M1020 fixup configures pin 0x19 for it, but no headset was plugged in while
+testing), and the `micmute` symptom (not observed here either, but absence of
+observation is not a report). The fan tachometer **offsets** are also resolved
+(2026-10-08): there is nothing to re-find in plain EC RAM on this board — the
+RPMs live in EC mailbox registers `0x20020A00–05`, reachable through `\GFNS`
+(WMI `0x00000802`) or the mailbox read `RDER`, and manual control exists via
+`WTER` (unlike ZQC-P). See `mra-xxx-power.md`.
